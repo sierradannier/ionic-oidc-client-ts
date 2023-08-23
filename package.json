@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "Ionic OpenID Connect (OIDC) & OAuth2 client library",
   "author": "D Sierra",
-  "homepage": "",
+  "homepage": "https://github.com/sierradannier/ionic-oidc-client-ts",
   "exports": {
     ".": {
       "types": "./dist/types/ionic-oidc-client-ts.d.ts",
