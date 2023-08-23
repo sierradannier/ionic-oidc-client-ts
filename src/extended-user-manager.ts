@@ -1,8 +1,7 @@
 import type {
     CreateSigninRequestArgs, ExtraSignoutRequestArgs, RedirectParams, SigninPopupArgs,
     IFrameWindowParams, SigninRedirectArgs, SignoutPopupArgs, SignoutRedirectArgs, 
-    SignoutSilentArgs, UseRefreshTokenArgs, UserManagerSettings,
-    ExtraSigninRequestArgs
+    SignoutSilentArgs, UseRefreshTokenArgs, UserManagerSettings, ExtraSigninRequestArgs
 } from 'oidc-client-ts';
 import {
     User, UserManager
@@ -13,13 +12,11 @@ import type { MobileWindowParams } from './models/mobile-window-params.model';
 import type { ExtendedUserManagerSettings } from './models/extended-user-manager-settings.model';
 
 /**
- * The SigninMobileArgs class
  * @public
  */
 export type SigninMobileArgs = MobileWindowParams & ExtraSigninRequestArgs;
 
 /**
- * The SignoutMobileArgs class
  * @public
  */
 export type SignoutMobileArgs = MobileWindowParams & ExtraSignoutRequestArgs;
@@ -45,6 +42,21 @@ export class ExtendedUserManager extends UserManager {
     public async signinMobile(args: SigninMobileArgs = {}): Promise<User | null> {
         const logger = this._logger.create('signinMobile');
 
+        let user = await this._loadUser();
+        if (user?.refresh_token) {
+            logger.debug("using refresh token");
+            const state: RefreshState = {
+                refresh_token: user.refresh_token,
+                id_token: user.id_token,
+                session_state: user.access_token,
+                scope: user.scope,
+                profile: user.profile,
+                resource: args.resource,
+                data: user.state
+            };
+            return await this._useRefreshToken(state);
+        }
+
         const {
             mobileWindowToolbarColor,
             mobileWindowPresentationStyle,
@@ -62,7 +74,7 @@ export class ExtendedUserManager extends UserManager {
 
         const handle = this._mobileNavigator.prepare(this.settings.redirect_uri, params);
 
-        const user = await this._signin({
+        user = await this._signin({
             request_type: 'si:m',
             redirect_uri: this.settings.redirect_uri,
             ...requestArgs
